@@ -13,19 +13,32 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import * as AC from '@bacons/apple-colors';
 
 export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const [zoom, setZoom] = useState(1); // Start with 1x (index 1)
+  const [zoomIndex, setZoomIndex] = useState(1); // Start with 1x (index 1)
   const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const colorScheme = useColorScheme();
 
-  // Zoom levels that correspond to camera zoom values
-  const zoomLevels = [0.5, 1.0, 2.0];
-  const currentZoomValue = zoomLevels[zoom];
+  // Zoom levels - try different values to see what works
+  const zoomLevels = [
+    { display: '0.5x', value: 0.1 },  // Wide angle
+    { display: '1x', value: 0.5 },   // Normal
+    { display: '2x', value: 0.9 }    // Telephoto
+  ];
+
+  const currentZoom = zoomLevels[zoomIndex];
+
+  // Debug function to test zoom values
+  const testZoomValues = () => {
+    console.log('Current zoom index:', zoomIndex);
+    console.log('Current zoom value:', currentZoom.value);
+    console.log('Current zoom display:', currentZoom.display);
+  };
 
   // Load last photo when screen comes into focus
   useFocusEffect(
@@ -63,6 +76,21 @@ export default function CameraScreen() {
     );
   }
 
+  const handleZoomChange = async (index: number) => {
+    try {
+      // Add haptic feedback for better UX
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Haptics not available:', error);
+    }
+
+    setZoomIndex(index);
+    console.log(`Zoom changed to ${zoomLevels[index].display} (value: ${zoomLevels[index].value})`);
+
+    // Test if zoom is working by calling testZoomValues after state update
+    setTimeout(testZoomValues, 100);
+  };
+
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
@@ -95,49 +123,49 @@ export default function CameraScreen() {
         <View style={styles.zoomRow}>
           <Pressable
             style={styles.zoomButton}
-            onPress={() => setZoom(0)}
+            onPress={() => handleZoomChange(0)}
           >
             <View style={styles.zoomLines}>
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 0 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 0 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 0 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
             </View>
             <Text style={[styles.zoomText, {
-              color: zoom === 0 ? textColor : AC.quaternaryLabel,
-              fontWeight: zoom === 0 ? '600' : '400'
+              color: zoomIndex === 0 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoomIndex === 0 ? '600' : '400'
             }]}>0.5x</Text>
           </Pressable>
 
           <Pressable
             style={styles.zoomButton}
-            onPress={() => setZoom(1)}
+            onPress={() => handleZoomChange(1)}
           >
             <View style={styles.zoomLines}>
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
             </View>
             <Text style={[styles.zoomText, {
-              color: zoom === 1 ? textColor : AC.quaternaryLabel,
-              fontWeight: zoom === 1 ? '600' : '400'
+              color: zoomIndex === 1 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoomIndex === 1 ? '600' : '400'
             }]}>1x</Text>
           </Pressable>
 
           <Pressable
             style={styles.zoomButton}
-            onPress={() => setZoom(2)}
+            onPress={() => handleZoomChange(2)}
           >
             <View style={styles.zoomLines}>
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
             </View>
             <Text style={[styles.zoomText, {
-              color: zoom === 2 ? textColor : AC.quaternaryLabel,
-              fontWeight: zoom === 2 ? '600' : '400'
+              color: zoomIndex === 2 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoomIndex === 2 ? '600' : '400'
             }]}>2x</Text>
           </Pressable>
         </View>
@@ -151,12 +179,27 @@ export default function CameraScreen() {
       {/* Camera View - Centered with rounded corners */}
       <View style={styles.cameraContainer}>
         <CameraView
-          style={styles.camera}
+          style={[
+            styles.camera,
+            // Apply visual scaling if native zoom doesn't work
+            {
+              transform: [
+                { scale: zoomIndex === 0 ? 0.8 : zoomIndex === 2 ? 1.2 : 1.0 }
+              ]
+            }
+          ]}
           facing={facing}
-          zoom={currentZoomValue}
+          zoom={currentZoom.value}
           ref={cameraRef}
-          enableTorch={false}
+          mode="picture"
         />
+
+        {/* Debug overlay to show current zoom */}
+        <View style={styles.debugOverlay}>
+          <Text style={styles.debugText}>
+            {currentZoom.display} (zoom: {currentZoom.value})
+          </Text>
+        </View>
       </View>
 
       {/* Bottom Controls */}
@@ -266,6 +309,20 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  debugOverlay: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  debugText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   // Bottom Controls - Minimalist layout
