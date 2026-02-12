@@ -33,13 +33,6 @@ export default function CameraScreen() {
 
   const currentZoom = zoomLevels[zoomIndex];
 
-  // Debug function to test zoom values
-  const testZoomValues = () => {
-    console.log('Current zoom index:', zoomIndex);
-    console.log('Current zoom value:', currentZoom.value);
-    console.log('Current zoom display:', currentZoom.display);
-  };
-
   // Load last photo when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -86,9 +79,6 @@ export default function CameraScreen() {
 
     setZoomIndex(index);
     console.log(`Zoom changed to ${zoomLevels[index].display} (value: ${zoomLevels[index].value})`);
-
-    // Test if zoom is working by calling testZoomValues after state update
-    setTimeout(testZoomValues, 100);
   };
 
   const takePicture = async () => {
@@ -179,27 +169,11 @@ export default function CameraScreen() {
       {/* Camera View - Centered with rounded corners */}
       <View style={styles.cameraContainer}>
         <CameraView
-          style={[
-            styles.camera,
-            // Apply visual scaling if native zoom doesn't work
-            {
-              transform: [
-                { scale: zoomIndex === 0 ? 0.8 : zoomIndex === 2 ? 1.2 : 1.0 }
-              ]
-            }
-          ]}
+          style={styles.camera}
           facing={facing}
           zoom={currentZoom.value}
           ref={cameraRef}
-          mode="picture"
         />
-
-        {/* Debug overlay to show current zoom */}
-        <View style={styles.debugOverlay}>
-          <Text style={styles.debugText}>
-            {currentZoom.display} (zoom: {currentZoom.value})
-          </Text>
-        </View>
       </View>
 
       {/* Bottom Controls */}
@@ -309,20 +283,6 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
-  },
-  debugOverlay: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  debugText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
   },
 
   // Bottom Controls - Minimalist layout
