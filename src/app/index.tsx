@@ -8,88 +8,109 @@ import {
   Alert,
   Pressable,
   Image,
+  useColorScheme,
 } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { router } from 'expo-router';
 import * as AC from '@bacons/apple-colors';
 
 export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [zoom, setZoom] = useState(1.0);
+  const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const colorScheme = useColorScheme();
 
   if (!permission) {
     // Camera permissions are still loading.
-    return <View />;
+    return <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }]} />;
   }
 
   if (!permission.granted) {
     // Camera permissions are not granted yet.
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to show the camera</Text>
+      <View style={[styles.container, styles.permissionContainer, { backgroundColor: colorScheme === 'dark' ? 'black' : 'white' }]}>
+        <Text style={[styles.message, { color: colorScheme === 'dark' ? 'white' : 'black' }]}>
+          Pocket Monet needs camera access to transform your photos into beautiful Impressionist paintings
+        </Text>
         <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
-          <Text style={styles.permissionText}>Grant permission</Text>
+          <Text style={styles.permissionText}>Grant Camera Access</Text>
         </TouchableOpacity>
       </View>
     );
-  }
-
-  function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
+          quality: 0.9,
+          base64: true,
         });
-        Alert.alert('Photo taken!', `Photo saved: ${photo.uri}`);
+
+        // Navigate to result screen immediately with photo data
+        router.push({
+          pathname: '/result',
+          params: {
+            photoUri: photo.uri,
+            base64: photo.base64
+          }
+        });
       } catch (error) {
-        Alert.alert('Error', 'Failed to take photo');
+        Alert.alert('Error', 'Failed to capture photo. Please try again.');
       }
     }
   };
 
+  const backgroundColor = colorScheme === 'dark' ? 'black' : 'white';
+  const textColor = colorScheme === 'dark' ? 'white' : 'black';
+
   return (
-    <View style={styles.container}>
-      {/* Zoom Controls */}
+    <View style={[styles.container, { backgroundColor }]}>
+      {/* Top Zoom Controls */}
       <View style={styles.zoomContainer}>
         <View style={styles.zoomRow}>
           <Pressable
-            style={[styles.zoomButton, zoom === 0.5 && styles.zoomButtonActive]}
+            style={styles.zoomButton}
             onPress={() => setZoom(0.5)}
           >
-            <View style={styles.zoomLine} />
-            <Text style={[styles.zoomText, zoom === 0.5 && styles.zoomTextActive]}>0.5x</Text>
+            <View style={[styles.zoomLine, { backgroundColor: zoom === 0.5 ? textColor : AC.quaternaryLabel }]} />
+            <Text style={[styles.zoomText, {
+              color: zoom === 0.5 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoom === 0.5 ? '600' : '400'
+            }]}>0.5x</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.zoomButton, zoom === 1.0 && styles.zoomButtonActive]}
+            style={styles.zoomButton}
             onPress={() => setZoom(1.0)}
           >
-            <View style={styles.zoomLine} />
-            <Text style={[styles.zoomText, zoom === 1.0 && styles.zoomTextActive]}>1x</Text>
+            <View style={[styles.zoomLine, { backgroundColor: zoom === 1.0 ? textColor : AC.quaternaryLabel }]} />
+            <Text style={[styles.zoomText, {
+              color: zoom === 1.0 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoom === 1.0 ? '600' : '400'
+            }]}>1x</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.zoomButton, zoom === 2.0 && styles.zoomButtonActive]}
+            style={styles.zoomButton}
             onPress={() => setZoom(2.0)}
           >
-            <View style={styles.zoomLine} />
-            <Text style={[styles.zoomText, zoom === 2.0 && styles.zoomTextActive]}>2x</Text>
+            <View style={[styles.zoomLine, { backgroundColor: zoom === 2.0 ? textColor : AC.quaternaryLabel }]} />
+            <Text style={[styles.zoomText, {
+              color: zoom === 2.0 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoom === 2.0 ? '600' : '400'
+            }]}>2x</Text>
           </Pressable>
         </View>
 
-        {/* Record Button */}
+        {/* Small indicator dot */}
         <View style={styles.recordButtonContainer}>
-          <View style={styles.recordButton} />
+          <View style={[styles.recordButton, { backgroundColor: textColor }]} />
         </View>
       </View>
 
-      {/* Camera View */}
+      {/* Camera View - Centered with rounded corners */}
       <View style={styles.cameraContainer}>
         <CameraView
           style={styles.camera}
@@ -102,28 +123,21 @@ export default function CameraScreen() {
       {/* Bottom Controls */}
       <View style={styles.bottomControls}>
         <View style={styles.controlsRow}>
-          {/* Photo Thumbnail */}
+          {/* Photo Thumbnail - Shows last transformation result */}
           <View style={styles.thumbnailContainer}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop' }}
-              style={styles.thumbnail}
-            />
+            {lastPhoto ? (
+              <Image source={{ uri: lastPhoto }} style={styles.thumbnail} />
+            ) : (
+              <View style={[styles.thumbnailPlaceholder, { backgroundColor: AC.systemGray5 }]} />
+            )}
           </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <Pressable style={styles.actionButton}>
-              <MaterialIcons name="file-download" size={24} color={AC.label} />
-            </Pressable>
+          {/* Spacer */}
+          <View style={styles.spacer} />
 
-            <Pressable style={styles.actionButton}>
-              <MaterialIcons name="close" size={24} color={AC.label} />
-            </Pressable>
-          </View>
-
-          {/* Capture Button */}
-          <Pressable style={styles.captureButtonOuter} onPress={takePicture}>
-            <View style={styles.captureButtonInner} />
+          {/* Large White Shutter Button */}
+          <Pressable style={styles.shutterButton} onPress={takePicture}>
+            <View style={styles.shutterButtonInner} />
           </Pressable>
         </View>
       </View>
@@ -134,28 +148,34 @@ export default function CameraScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+  },
+  permissionContainer: {
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    gap: 30,
   },
   message: {
     textAlign: 'center',
-    paddingBottom: 10,
-    color: 'white',
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '400',
   },
   permissionButton: {
     backgroundColor: AC.systemBlue,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignSelf: 'center',
   },
   permissionText: {
     color: 'white',
     fontWeight: '600',
+    fontSize: 16,
   },
 
   // Zoom Controls
   zoomContainer: {
-    paddingTop: 60,
+    paddingTop: 80,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
@@ -163,48 +183,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    maxWidth: 300,
-    paddingHorizontal: 40,
+    maxWidth: 280,
+    paddingHorizontal: 20,
   },
   zoomButton: {
     alignItems: 'center',
-    paddingVertical: 8,
-  },
-  zoomButtonActive: {
-    // Active state styling handled by text color
+    paddingVertical: 12,
   },
   zoomLine: {
     width: 1,
-    height: 16,
-    backgroundColor: AC.quaternaryLabel,
-    marginBottom: 4,
+    height: 20,
+    marginBottom: 6,
   },
   zoomText: {
-    color: AC.quaternaryLabel,
-    fontSize: 12,
-    fontWeight: '400',
-  },
-  zoomTextActive: {
-    color: AC.label,
-    fontWeight: '600',
+    fontSize: 13,
   },
   recordButtonContainer: {
-    marginTop: 20,
+    marginTop: 24,
     alignItems: 'center',
   },
   recordButton: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: AC.label,
   },
 
-  // Camera
+  // Camera - Centered with lots of whitespace
   cameraContainer: {
     flex: 1,
-    margin: 20,
-    marginTop: 40,
-    borderRadius: 20,
+    marginHorizontal: 32,
+    marginTop: 50,
+    marginBottom: 50,
+    borderRadius: 24,
     overflow: 'hidden',
     borderCurve: 'continuous',
   },
@@ -212,20 +222,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Bottom Controls
+  // Bottom Controls - Minimalist layout
   bottomControls: {
-    paddingBottom: 40,
-    paddingHorizontal: 20,
+    paddingBottom: 60,
+    paddingHorizontal: 32,
   },
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   thumbnailContainer: {
     width: 60,
     height: 60,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
     borderCurve: 'continuous',
   },
@@ -233,30 +242,31 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 20,
+  thumbnailPlaceholder: {
+    width: '100%',
+    height: '100%',
   },
-  actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: AC.tertiarySystemBackground,
+  spacer: {
+    flex: 1,
+  },
+  shutterButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
+    // Add subtle shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  captureButtonOuter: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: AC.tertiarySystemBackground,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: AC.label,
+  shutterButtonInner: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'white',
   },
 });
