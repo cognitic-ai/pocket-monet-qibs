@@ -18,10 +18,14 @@ import * as AC from '@bacons/apple-colors';
 export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const [zoom, setZoom] = useState(1.0);
+  const [zoom, setZoom] = useState(1); // Start with 1x (index 1)
   const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const colorScheme = useColorScheme();
+
+  // Zoom levels that correspond to camera zoom values
+  const zoomLevels = [0.5, 1.0, 2.0];
+  const currentZoomValue = zoomLevels[zoom];
 
   // Load last photo when screen comes into focus
   useFocusEffect(
@@ -86,39 +90,54 @@ export default function CameraScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      {/* Top Zoom Controls */}
+      {/* Top Zoom Controls - Match design exactly */}
       <View style={styles.zoomContainer}>
         <View style={styles.zoomRow}>
           <Pressable
             style={styles.zoomButton}
-            onPress={() => setZoom(0.5)}
+            onPress={() => setZoom(0)}
           >
-            <View style={[styles.zoomLine, { backgroundColor: zoom === 0.5 ? textColor : AC.quaternaryLabel }]} />
+            <View style={styles.zoomLines}>
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 0 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 0 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 0 ? textColor : AC.quaternaryLabel }]} />
+            </View>
             <Text style={[styles.zoomText, {
-              color: zoom === 0.5 ? textColor : AC.quaternaryLabel,
-              fontWeight: zoom === 0.5 ? '600' : '400'
+              color: zoom === 0 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoom === 0 ? '600' : '400'
             }]}>0.5x</Text>
           </Pressable>
 
           <Pressable
             style={styles.zoomButton}
-            onPress={() => setZoom(1.0)}
+            onPress={() => setZoom(1)}
           >
-            <View style={[styles.zoomLine, { backgroundColor: zoom === 1.0 ? textColor : AC.quaternaryLabel }]} />
+            <View style={styles.zoomLines}>
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 1 ? textColor : AC.quaternaryLabel }]} />
+            </View>
             <Text style={[styles.zoomText, {
-              color: zoom === 1.0 ? textColor : AC.quaternaryLabel,
-              fontWeight: zoom === 1.0 ? '600' : '400'
+              color: zoom === 1 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoom === 1 ? '600' : '400'
             }]}>1x</Text>
           </Pressable>
 
           <Pressable
             style={styles.zoomButton}
-            onPress={() => setZoom(2.0)}
+            onPress={() => setZoom(2)}
           >
-            <View style={[styles.zoomLine, { backgroundColor: zoom === 2.0 ? textColor : AC.quaternaryLabel }]} />
+            <View style={styles.zoomLines}>
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
+              <View style={[styles.zoomLine, { backgroundColor: zoom === 2 ? textColor : AC.quaternaryLabel }]} />
+            </View>
             <Text style={[styles.zoomText, {
-              color: zoom === 2.0 ? textColor : AC.quaternaryLabel,
-              fontWeight: zoom === 2.0 ? '600' : '400'
+              color: zoom === 2 ? textColor : AC.quaternaryLabel,
+              fontWeight: zoom === 2 ? '600' : '400'
             }]}>2x</Text>
           </Pressable>
         </View>
@@ -134,8 +153,9 @@ export default function CameraScreen() {
         <CameraView
           style={styles.camera}
           facing={facing}
-          zoom={zoom}
+          zoom={currentZoomValue}
           ref={cameraRef}
+          enableTorch={false}
         />
       </View>
 
@@ -202,17 +222,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    maxWidth: 280,
-    paddingHorizontal: 20,
+    maxWidth: 320,
+    paddingHorizontal: 40,
   },
   zoomButton: {
     alignItems: 'center',
     paddingVertical: 12,
+    minWidth: 50,
+  },
+  zoomLines: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 8,
+    height: 20,
+    alignItems: 'flex-end',
   },
   zoomLine: {
-    width: 1,
-    height: 20,
-    marginBottom: 6,
+    width: 1.5,
+    height: '100%',
   },
   zoomText: {
     fontSize: 13,
