@@ -10,7 +10,9 @@ import {
   Image,
   useColorScheme,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AC from '@bacons/apple-colors';
 
 export default function CameraScreen() {
@@ -20,6 +22,23 @@ export default function CameraScreen() {
   const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const colorScheme = useColorScheme();
+
+  // Load last photo when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const loadLastPhoto = async () => {
+        try {
+          const savedPhoto = await AsyncStorage.getItem('lastTransformedImage');
+          if (savedPhoto) {
+            setLastPhoto(savedPhoto);
+          }
+        } catch (error) {
+          console.log('Error loading last photo:', error);
+        }
+      };
+      loadLastPhoto();
+    }, [])
+  );
 
   if (!permission) {
     // Camera permissions are still loading.
