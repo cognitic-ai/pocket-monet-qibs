@@ -14,6 +14,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, useAnimatedGestureHandler, runOnJS } from 'react-native-reanimated';
 import * as AC from '@bacons/apple-colors';
 
 export default function CameraScreen() {
@@ -33,6 +35,17 @@ export default function CameraScreen() {
 
   const currentZoom = zoomLevels[zoomIndex];
 
+  // Animation for red indicator dot
+  const indicatorPosition = useSharedValue(zoomIndex);
+
+  // Update indicator position when zoom changes
+  const updateIndicatorPosition = () => {
+    indicatorPosition.value = withSpring(zoomIndex, {
+      damping: 15,
+      stiffness: 150,
+    });
+  };
+
   // Load last photo when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -47,6 +60,8 @@ export default function CameraScreen() {
         }
       };
       loadLastPhoto();
+      // Initialize indicator position
+      updateIndicatorPosition();
     }, [])
   );
 
@@ -70,6 +85,8 @@ export default function CameraScreen() {
   }
 
   const handleZoomChange = async (index: number) => {
+    if (index < 0 || index >= zoomLevels.length) return;
+
     try {
       // Add haptic feedback for better UX
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -78,8 +95,51 @@ export default function CameraScreen() {
     }
 
     setZoomIndex(index);
+    updateIndicatorPosition();
     console.log(`Zoom changed to ${zoomLevels[index].display} (value: ${zoomLevels[index].value})`);
   };
+
+  // Swipe gesture handler for zoom control
+  const panGestureHandler = useAnimatedGestureHandler({
+    onStart: () => {
+      // Optional: Add haptic feedback on start
+    },
+    onActive: (event) => {
+      // Calculate which zoom level based on swipe position
+      const containerWidth = 280; // Match scaleContainer width
+      const sectionWidth = containerWidth / 3;
+      const position = event.absoluteX;
+      const newIndex = Math.min(2, Math.max(0, Math.floor(position / sectionWidth)));
+
+      // Update indicator position smoothly
+      indicatorPosition.value = newIndex;
+    },
+    onEnd: (event) => {
+      // Snap to closest zoom level
+      const containerWidth = 280;
+      const sectionWidth = containerWidth / 3;
+      const position = event.absoluteX;
+      const newIndex = Math.min(2, Math.max(0, Math.floor(position / sectionWidth)));
+
+      // Update zoom level
+      runOnJS(handleZoomChange)(newIndex);
+    },
+  });
+
+  // Animated style for indicator dot
+  const animatedIndicatorStyle = useAnimatedStyle(() => {
+    const containerWidth = 280;
+    const sectionWidth = containerWidth / 3;
+    const baseOffset = sectionWidth / 2; // Center of first section
+
+    return {
+      transform: [
+        {
+          translateX: baseOffset + (indicatorPosition.value * sectionWidth) - 140, // Center relative to container
+        },
+      ],
+    };
+  });
 
   const takePicture = async () => {
     if (cameraRef.current) {
@@ -107,37 +167,28 @@ export default function CameraScreen() {
   const textColor = colorScheme === 'dark' ? 'white' : 'black';
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      {/* Top Zoom Controls - Match screenshot design exactly */}
+    <GestureHandlerRootView style={[styles.container, { backgroundColor }]}>
+      {/* Top Zoom Controls - One bar per zoom level */}
       <View style={styles.zoomContainer}>
-        {/* Scale indicator lines */}
-        <View style={styles.scaleContainer}>
-          {/* 0.5x section - 3 lines with varying heights */}
-          <View style={styles.scaleSection}>
-            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineTall, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-          </View>
+        {/* Scale indicator lines - one per zoom level */}
+        <PanGestureHandler onGestureEvent={panGestureHandler}>
+          <Animated.View style={styles.scaleContainer}>
+            {/* 0.5x bar */}
+            <View style={styles.scaleSection}>
+              <View style={[styles.singleScaleLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+            </View>
 
-          {/* 1x section - 5 lines with center tallest */}
-          <View style={styles.scaleSection}>
-            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineTall, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-          </View>
+            {/* 1x bar - taller */}
+            <View style={styles.scaleSection}>
+              <View style={[styles.singleScaleLine, styles.tallScaleLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+            </View>
 
-          {/* 2x section - 4 lines with rightmost tallest */}
-          <View style={styles.scaleSection}>
-            <View style={[styles.scaleLine, styles.scaleLineTall, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-          </View>
-        </View>
+            {/* 2x bar */}
+            <View style={styles.scaleSection}>
+              <View style={[styles.singleScaleLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
 
         {/* Zoom level labels */}
         <View style={styles.zoomRow}>
@@ -172,9 +223,9 @@ export default function CameraScreen() {
           </Pressable>
         </View>
 
-        {/* Small red indicator dot */}
-        <View style={styles.recordButtonContainer}>
-          <View style={styles.recordButton} />
+        {/* Animated red indicator dot */}
+        <View style={styles.indicatorContainer}>
+          <Animated.View style={[styles.recordButton, animatedIndicatorStyle]} />
         </View>
       </View>
 
@@ -209,7 +260,7 @@ export default function CameraScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -252,28 +303,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    width: '100%',
-    maxWidth: 280,
+    width: 280,
     height: 40,
     paddingHorizontal: 20,
   },
   scaleSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 3,
+    alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
-  scaleLine: {
+  singleScaleLine: {
     width: 2,
-  },
-  scaleLineShort: {
-    height: 12,
-  },
-  scaleLineMedium: {
     height: 20,
   },
-  scaleLineTall: {
+  tallScaleLine: {
     height: 32,
   },
   zoomRow: {
@@ -292,15 +335,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  recordButtonContainer: {
+  indicatorContainer: {
     marginTop: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    width: 280,
+    height: 16,
+    position: 'relative',
   },
   recordButton: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#FF3B30', // iOS red color matching screenshot
+    position: 'absolute',
   },
 
   // Camera - Centered with lots of whitespace
