@@ -108,18 +108,43 @@ export default function CameraScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      {/* Top Zoom Controls - Match design exactly */}
+      {/* Top Zoom Controls - Match screenshot design exactly */}
       <View style={styles.zoomContainer}>
+        {/* Scale indicator lines */}
+        <View style={styles.scaleContainer}>
+          {/* 0.5x section - 3 lines with varying heights */}
+          <View style={styles.scaleSection}>
+            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineTall, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
+          </View>
+
+          {/* 1x section - 5 lines with center tallest */}
+          <View style={styles.scaleSection}>
+            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineTall, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
+          </View>
+
+          {/* 2x section - 4 lines with rightmost tallest */}
+          <View style={styles.scaleSection}>
+            <View style={[styles.scaleLine, styles.scaleLineTall, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineShort, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+            <View style={[styles.scaleLine, styles.scaleLineMedium, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
+          </View>
+        </View>
+
+        {/* Zoom level labels */}
         <View style={styles.zoomRow}>
           <Pressable
             style={styles.zoomButton}
             onPress={() => handleZoomChange(0)}
           >
-            <View style={styles.zoomLines}>
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 0 ? textColor : AC.quaternaryLabel }]} />
-            </View>
             <Text style={[styles.zoomText, {
               color: zoomIndex === 0 ? textColor : AC.quaternaryLabel,
               fontWeight: zoomIndex === 0 ? '600' : '400'
@@ -130,13 +155,6 @@ export default function CameraScreen() {
             style={styles.zoomButton}
             onPress={() => handleZoomChange(1)}
           >
-            <View style={styles.zoomLines}>
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 1 ? textColor : AC.quaternaryLabel }]} />
-            </View>
             <Text style={[styles.zoomText, {
               color: zoomIndex === 1 ? textColor : AC.quaternaryLabel,
               fontWeight: zoomIndex === 1 ? '600' : '400'
@@ -147,12 +165,6 @@ export default function CameraScreen() {
             style={styles.zoomButton}
             onPress={() => handleZoomChange(2)}
           >
-            <View style={styles.zoomLines}>
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-              <View style={[styles.zoomLine, { backgroundColor: zoomIndex === 2 ? textColor : AC.quaternaryLabel }]} />
-            </View>
             <Text style={[styles.zoomText, {
               color: zoomIndex === 2 ? textColor : AC.quaternaryLabel,
               fontWeight: zoomIndex === 2 ? '600' : '400'
@@ -160,9 +172,9 @@ export default function CameraScreen() {
           </Pressable>
         </View>
 
-        {/* Small indicator dot */}
+        {/* Small red indicator dot */}
         <View style={styles.recordButtonContainer}>
-          <View style={[styles.recordButton, { backgroundColor: textColor }]} />
+          <View style={styles.recordButton} />
         </View>
       </View>
 
@@ -231,44 +243,64 @@ const styles = StyleSheet.create({
 
   // Zoom Controls
   zoomContainer: {
-    paddingTop: 80,
+    paddingTop: 60,
     paddingHorizontal: 20,
     alignItems: 'center',
+    gap: 16,
+  },
+  scaleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    width: '100%',
+    maxWidth: 280,
+    height: 40,
+    paddingHorizontal: 20,
+  },
+  scaleSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 3,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  scaleLine: {
+    width: 2,
+  },
+  scaleLineShort: {
+    height: 12,
+  },
+  scaleLineMedium: {
+    height: 20,
+  },
+  scaleLineTall: {
+    height: 32,
   },
   zoomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    maxWidth: 320,
-    paddingHorizontal: 40,
+    maxWidth: 280,
+    paddingHorizontal: 20,
   },
   zoomButton: {
     alignItems: 'center',
-    paddingVertical: 12,
-    minWidth: 50,
-  },
-  zoomLines: {
-    flexDirection: 'row',
-    gap: 4,
-    marginBottom: 8,
-    height: 20,
-    alignItems: 'flex-end',
-  },
-  zoomLine: {
-    width: 1.5,
-    height: '100%',
+    paddingVertical: 8,
+    flex: 1,
   },
   zoomText: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: '500',
   },
   recordButtonContainer: {
-    marginTop: 24,
+    marginTop: 8,
     alignItems: 'center',
   },
   recordButton: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: '#FF3B30', // iOS red color matching screenshot
   },
 
   // Camera - Centered with lots of whitespace
