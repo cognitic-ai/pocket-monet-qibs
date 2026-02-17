@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import {
   useColorScheme,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -61,8 +60,11 @@ export default function CameraScreen() {
       };
       loadLastPhoto();
       // Initialize indicator position
-      updateIndicatorPosition();
-    }, [])
+      indicatorPosition.value = withSpring(zoomIndex, {
+        damping: 15,
+        stiffness: 150,
+      });
+    }, [zoomIndex, indicatorPosition])
   );
 
   if (!permission) {
@@ -400,10 +402,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     // Add subtle shadow for depth
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
   },
   shutterButtonInner: {
